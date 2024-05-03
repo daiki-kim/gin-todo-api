@@ -7,7 +7,8 @@ import (
 )
 
 func setupRouter() *gin.Engine {
-	models.InitDB()
+	models.InitTodoDB()
+	models.InitUserDB()
 
 	router := gin.Default()
 
@@ -16,6 +17,9 @@ func setupRouter() *gin.Engine {
 	router.GET("/todos/:id", controllers.GetTodo)
 	router.PUT("/todos/:id", controllers.UpdateTodo)
 	router.DELETE("/todos/:id", controllers.DeleteTodo)
+
+	router.POST("/users/register", controllers.Register)
+	router.POST("/users/login", controllers.LoginUser)
 
 	return router
 }
