@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var DB *gorm.DB
+var DB *gorm.DB // main.goで初期化する
 
 func ConnectToDB() (db *gorm.DB) {
 	db, err := gorm.Open(sqlite.Open("todo.db"), &gorm.Config{})
@@ -31,9 +31,24 @@ func (t *Task) Create() (*Task, error) {
 }
 
 func FindAllTasks() ([]Task, error) {
-	var tasks []Task
+	var tasks = []Task{}                          // 変数宣言時点で空のメモリを割り当てるため、データが0件でも空の配列を返す（var tasks []Taskだとデータがないときにnilを返す）
 	if err := DB.Find(&tasks).Error; err != nil { // tasksが示す型Taskのテーブルから全てのレコードを取得し[]tasksに直接格納
 		return nil, err
 	}
 	return tasks, nil
+}
+
+func FindTaskById(ID uint) (*Task, error) {
+	var task = Task{} // 明示的な初期化を表す。（var task TasでもGolangの変数宣言時に自動的にゼロ値で初期化される特性上、機能的差異はない）
+	if err := DB.First(&task, ID).Error; err != nil {
+		return nil, err
+	}
+	return &task, nil
+}
+
+func (t *Task) SaveTask(updateTask Task) (*Task, error) {
+	if err := DB.Save(&updateTask).Error; err != nil {
+		return nil, err
+	}
+	return &updateTask, nil
 }

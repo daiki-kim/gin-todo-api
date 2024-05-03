@@ -10,8 +10,10 @@ func setupRouter() *gin.Engine {
 	router := gin.Default()
 
 	taskHandler := controllers.TaskHandler{}
-	router.POST("/tasks", taskHandler.CreateTask)
-	router.GET("/tasks", taskHandler.GetTasks)
+	router.POST("/todos", taskHandler.CreateTask)
+	router.GET("/todos", taskHandler.GetTasks)
+	router.GET("/todos/:id", taskHandler.GetTask)
+	router.PUT("/todos/:id", taskHandler.UpdateTask)
 
 	return router
 }
