@@ -7,75 +7,74 @@ import (
 	"strconv"
 )
 
-type TaskHandler struct{}
-
-func (t *TaskHandler) CreateTask(c *gin.Context) {
-	var task models.Task
-	if err := c.ShouldBindJSON(&task); err != nil {
-		c.JSON(http.StatusBadRequest, nil)
-		return
-	}
-
-	createdTask, err := task.Create()
+func GetTodos(c *gin.Context) {
+	todos, err := models.GetAllTodos()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, nil)
-		return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusCreated, *createdTask)
+	c.JSON(http.StatusOK, todos)
 }
 
-func (t *TaskHandler) GetTasks(c *gin.Context) {
-	tasks, err := models.FindAllTasks()
+func GetTodo(c *gin.Context) {
+	todoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, nil)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
 	}
-	c.JSON(http.StatusOK, tasks)
+	gotTodo, err := models.GetTodoById(uint(todoID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "todo not found"})
+	}
+
+	c.JSON(http.StatusOK, gotTodo)
 }
 
-func (t *TaskHandler) GetTask(c *gin.Context) {
-	taskID, err := strconv.ParseUint(c.Param("id"), 10, 64) // str->uint64に変換
-	if err != nil {
-		c.JSON(http.StatusBadRequest, nil)
+func CreateTodo(c *gin.Context) {
+	var newTodo models.Todo
+	if err := c.ShouldBindJSON(&newTodo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	getTask, err := models.FindTaskById(uint(taskID)) // uint64->uintに変換
+
+	createdTodo, err := models.CreateNewTodo(newTodo)
 	if err != nil {
-		c.JSON(http.StatusNotFound, nil)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
-	c.JSON(http.StatusOK, getTask)
+	c.JSON(http.StatusCreated, createdTodo)
 }
 
-func (t *TaskHandler) UpdateTask(c *gin.Context) {
-	taskID, err := strconv.ParseUint(c.Param("id"), 10, 64) // str->uint64に変換
+func UpdateTodo(c *gin.Context) {
+	updateTodoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, nil)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	var updatedTask models.Task
-	if err := c.ShouldBindJSON(&updatedTask); err != nil {
-		c.JSON(http.StatusBadRequest, nil)
+	var updateTodo models.Todo
+	if err := c.ShouldBindJSON(&updateTodo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	targetTask, err := models.FindTaskById(uint(taskID))
+	updateTodo.ID = uint(updateTodoID)
+	updatedTodo, err := models.UpdateTodo(updateTodo)
 	if err != nil {
-		c.JSON(http.StatusNotFound, nil)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	c.JSON(http.StatusOK, updatedTodo)
+}
 
-	if updatedTask.ID != targetTask.ID {
-		targetTask.ID = updatedTask.ID
+func DeleteTodo(c *gin.Context) {
+	deleteTodoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"eeror": "invalid id"})
+		return
 	}
-	if updatedTask.Content != targetTask.Content {
-		targetTask.Content = updatedTask.Content
+	if err := models.DeleteTodo(uint(deleteTodoID)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-	if updatedTask.DueDate != targetTask.DueDate {
-		targetTask.DueDate = updatedTask.DueDate
-	}
-	if updatedTask.IsCompleted != targetTask.IsCompleted {
-		targetTask.IsCompleted = updatedTask.IsCompleted
-	}
-	targetTask.SaveTask(updatedTask)
-	c.JSON(http.StatusOK, targetTask)
+	c.Status(http.StatusOK)
 }
