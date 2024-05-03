@@ -3,37 +3,50 @@ package models
 import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"time"
+	"log"
 )
 
 var DB *gorm.DB
 
-func ConnectToDB() (db *gorm.DB) {
-	db, err := gorm.Open(sqlite.Open("todo.db"), &gorm.Config{})
+func InitDB() {
+	var err error
+	DB, err = gorm.Open(sqlite.Open("todo.db"), &gorm.Config{})
 	if err != nil {
-		panic(err)
+		panic("failed to connect database")
 	}
-	return db
+	DB.AutoMigrate(&Todo{})
+	log.Println("Database migrated")
 }
 
-type Task struct {
-	ID          uint      `json:"id" gorm:"primaryKey"`
-	Content     string    `json:"content" gorm:"not null"`
-	DueDate     time.Time `json:"due_date,omitempty"`
-	IsCompleted bool      `json:"is_completed,omitempty" gorm:"default:false"`
+type Todo struct {
+	gorm.Model
+	Content     string `json:"content"`
+	IsCompleted bool   `json:"is_completed" default:"false"`
 }
 
-func (t *Task) Create() (*Task, error) {
-	if err := DB.Create(&t).Error; err != nil {
-		return nil, err
-	}
-	return t, nil
+func GetAllTodos() ([]Todo, error) {
+	var todos []Todo
+	result := DB.Find(&todos)
+	return todos, result.Error
 }
 
-func FindAllTasks() ([]Task, error) {
-	var tasks []Task
-	if err := DB.Find(&tasks).Error; err != nil { // tasksが示す型Taskのテーブルから全てのレコードを取得し[]tasksに直接格納
-		return nil, err
-	}
-	return tasks, nil
+func GetTodoById(ID uint) (Todo, error) {
+	var todo Todo
+	result := DB.First(&todo, ID)
+	return todo, result.Error
+}
+
+func CreateNewTodo(todo Todo) (Todo, error) {
+	result := DB.Create(&todo)
+	return todo, result.Error
+}
+
+func UpdateTodo(todo Todo) (Todo, error) {
+	result := DB.Save(&todo)
+	return todo, result.Error
+}
+
+func DeleteTodo(ID uint) error {
+	result := DB.Delete(&Todo{}, ID)
+	return result.Error
 }
