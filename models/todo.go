@@ -5,6 +5,12 @@ import (
 	"gorm.io/gorm"
 )
 
+type Todo struct {
+	gorm.Model
+	Content     string `json:"content"`
+	IsCompleted bool   `json:"is_completed" default:"false"`
+}
+
 var TodoDB *gorm.DB
 
 func InitTodoDB() {
@@ -14,12 +20,6 @@ func InitTodoDB() {
 		panic("failed to connect database")
 	}
 	TodoDB.AutoMigrate(&Todo{})
-}
-
-type Todo struct {
-	gorm.Model
-	Content     string `json:"content"`
-	IsCompleted bool   `json:"is_completed" default:"false"`
 }
 
 func GetAllTodos() ([]Todo, error) {
