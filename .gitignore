@@ -10,7 +10,9 @@ pkg/*
 # goop - go package manager
 .vendor
 
-
+# DB
+todo.db
+user.db
 
 #############################
 #  $ gibo Go JetBrains OSX  #
