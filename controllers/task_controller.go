@@ -3,6 +3,7 @@ package controllers
 import (
 	"gin-todo-api/models"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
@@ -60,21 +61,29 @@ func UpdateTodo(c *gin.Context) {
 	updateTodo.ID = uint(updateTodoID)
 	updatedTodo, err := models.UpdateTodo(updateTodo)
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "todo not found"})
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, updatedTodo)
 }
 
 func DeleteTodo(c *gin.Context) {
 	deleteTodoID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"eeror": "invalid id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
 	if err := models.DeleteTodo(uint(deleteTodoID)); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "todo not found"})
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.Status(http.StatusOK)
 }
