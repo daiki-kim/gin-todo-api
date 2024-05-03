@@ -3,7 +3,6 @@ package models
 import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"log"
 )
 
 var DB *gorm.DB
@@ -15,7 +14,6 @@ func InitDB() {
 		panic("failed to connect database")
 	}
 	DB.AutoMigrate(&Todo{})
-	log.Println("Database migrated")
 }
 
 type Todo struct {
